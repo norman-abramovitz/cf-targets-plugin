@@ -1,7 +1,7 @@
 CF Targets Plugin
 =================
 
-[![Build Status](https://travis-ci.org/guidowb/cf-targets-plugin.svg?branch=master)](https://travis-ci.org/guidowb/cf-targets-plugin)
+[![Build Status](https://travis-ci.org/norman-abramovitz/cf-targets-plugin.svg?branch=master)](https://travis-ci.org/norman-abramovitz/cf-targets-plugin)
 
 This plugin facilitates the use of multiple api targets with the Cloud Foundry CLI.
 
@@ -71,8 +71,8 @@ production (current)
 ##### Install from Source (need to have [Go](http://golang.org/dl/) installed)
   ```
   $ go get github.com/cloudfoundry/cli
-  $ go get github.com/guidowb/cf-targets-plugin
-  $ cd $GOPATH/src/github.com/guidowb/cf-targets-plugin
+  $ go get github.com/norman-abramovitz/cf-targets-plugin
+  $ cd $GOPATH/src/github.com/norman-abramovitz/cf-targets-plugin
   $ go build
   $ cf install-plugin cf-targets-plugin
   ```

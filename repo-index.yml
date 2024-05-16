@@ -1,24 +1,27 @@
 - name: Targets
   description: Easily manage multiple CF targets
   version: _TAG_
-  created: 2015-4-17
-  updated: 2015-8-14
+  created: 2015-04-17
+  updated: _DATE-TAG_
   company:
   authors:
   - name: Guido Westenberg
     homepage: http://github.com/guidowb
     contact: gwestenberg@pivotal.io
-  homepage: http://github.com/guidowb/cf-targets-plugin
+  - name: Norman Abramovitz
+    homepage: http://github.com/norman-abramovitz
+    contact: nabramovitz@fivetwenty.io
+  homepage: http://github.com/norman-abramovitz/cf-targets-plugin
   binaries:
   - platform: osx-amd64
-    url: http://github.com/guidowb/cf-targets-plugin/raw/_TAG_/bin/osx-amd64/cf-targets-plugin
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/_TAG_/bin/osx-amd64/cf-targets-plugin
     checksum: osx-amd64-sha1
   - platform: osx-arm64
-    url: http://github.com/guidowb/cf-targets-plugin/raw/_TAG_/bin/osx-arm64/cf-targets-plugin
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/_TAG_/bin/osx-arm64/cf-targets-plugin
     checksum: osx-arm64-sha1
   - platform: win64
-    url: http://github.com/guidowb/cf-targets-plugin/raw/_TAG_/bin/win64/cf-targets-plugin.exe
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/_TAG_/bin/win64/cf-targets-plugin.exe
     checksum: win64-sha1
   - platform: linux64
-    url: http://github.com/guidowb/cf-targets-plugin/raw/_TAG_/bin/linux64/cf-targets-plugin
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/_TAG_/bin/linux64/cf-targets-plugin
     checksum: linux64-sha1

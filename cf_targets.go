@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"strconv"
 
 	realio "io/ioutil"
 	realos "os"
@@ -53,6 +54,22 @@ func (*RealOS) WriteFile(path string, content []byte, mode realos.FileMode) erro
 }
 
 var os OS
+var Major string
+var Minor string
+var Patch string
+var Prrls string  // prerelease
+var Build string
+var GoArch string
+var GoOs string
+
+func getIntOrPanic(toInt string) int {
+	theInt, err := strconv.Atoi(toInt)
+	if err != nil {
+		panic("unable to parse version: " + err.Error())
+	}
+	return theInt
+}
+
 
 func newTargetsPlugin() *TargetsPlugin {
 	configPath, _ := confighelpers.DefaultFilePath()
@@ -70,9 +87,9 @@ func (c *TargetsPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: "cf-targets",
 		Version: plugin.VersionType{
-			Major: 1,
-			Minor: 2,
-			Build: 0,
+			Major: getIntOrPanic(Major),
+			Minor: getIntOrPanic(Minor),
+			Build: getIntOrPanic(Patch),
 		},
 		Commands: []plugin.Command{
 			{
