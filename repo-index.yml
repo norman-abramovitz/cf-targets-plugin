@@ -2,7 +2,7 @@
   description: Easily manage multiple CF targets
   version: _TAG_
   created: 2015-04-17
-  updated: _DATE-TAG_
+  updated: _BUILD-TAG_
   company:
   authors:
   - name: Guido Westenberg
