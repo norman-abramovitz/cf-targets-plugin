@@ -70,7 +70,7 @@ production (current)
   
 ##### Install from Source (need to have [Go](http://golang.org/dl/) installed)
   ```
-  $ go get github.com/cloudfoundry/cli
+  $ go get code.cloudfoundry.org/cli
   $ go get github.com/norman-abramovitz/cf-targets-plugin
   $ cd $GOPATH/src/github.com/norman-abramovitz/cf-targets-plugin
   $ go build
