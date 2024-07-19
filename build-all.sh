@@ -2,8 +2,6 @@
 
 BUILD=$(date -Iseconds -u)
 PRERELEASE="dev"
-VERSION_CORE=$(git describe --tags --abbrev=0 | sed 's/^v//')
-VERSION_CORE=(${VERSION_CORE//./ })
 
 if [[ "$1" = "release" ]] ; then
     PRERELEASE=""
@@ -15,7 +13,12 @@ if [[ "$1" = "release" ]] ; then
         echo "$TAG exists, remove it or increment"
         exit 1
     fi
+    VERSION_CORE=$(echo "$TAG" | sed 's/^v//')
+else
+    VERSION_CORE=$(git describe --tags --abbrev=0 | sed 's/^v//')
 fi
+
+VERSION_CORE=(${VERSION_CORE//./ })
 
 declare LINUX64_SHA1 OSX_AMD64_SHA1 OSX_ARM64_SHA1 
 
