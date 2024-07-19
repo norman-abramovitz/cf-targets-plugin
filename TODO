@@ -1,0 +1,7 @@
+1. Add building prelease from the build-all script when doing a release using the gh command
+
+ gh release create v2.0.1 --draft  --repo github.com/norman-abramovitz/cf-targets-plugin
+ gh release upload v2.0.1 ./bin/*  --repo github.com/norman-abramovitz/cf-targets-plugin
+
+2. Cleanup building
+3. Add pipelining
