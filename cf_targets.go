@@ -54,11 +54,16 @@ func (*RealOS) WriteFile(path string, content []byte, mode realos.FileMode) erro
 }
 
 var os OS
-var Major string
-var Minor string
-var Patch string
-var Prrls string // prerelease
-var Build string
+var SemVerMajor string
+var SemVerMinor string
+var SemVerPatch string
+var SemVerPrerelease string
+var SemVerBuild string
+var BuildDate   string
+var BuildVcsUrl string
+var BuildVcsId   string
+var BuildVcsIdDate string
+
 var GoArch string
 var GoOs string
 
@@ -87,9 +92,9 @@ func (c *TargetsPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: "cf-targets",
 		Version: plugin.VersionType{
-			Major: getIntOrPanic(Major),
-			Minor: getIntOrPanic(Minor),
-			Build: getIntOrPanic(Patch),
+			Major: getIntOrPanic(SemVerMajor),
+			Minor: getIntOrPanic(SemVerMinor),
+			Build: getIntOrPanic(SemVerPatch),
 		},
 		Commands: []plugin.Command{
 			{
@@ -130,7 +135,38 @@ func (c *TargetsPlugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
+func createSemVer(major, minor, patch, prerelease, build string)( string) {
+	p1 := strings.TrimSpace(major)
+	p2 := strings.TrimSpace(minor)
+	p3 := strings.TrimSpace(patch)
+	p4 := strings.TrimSpace(prerelease)
+	p5 := strings.TrimSpace(build)
+	if p1 == "" || p2 == "" || p3 == "" {
+		panic(fmt.Sprintf("Semanic version is missing one of its parts: %s.%s.%s", p1,p2,p3)) 
+	}
+
+	sv := strings.Join([]string{p1,p2,p3},".")
+	if p4 != "" {
+		sv += "-" + p4;
+	}
+	if p5 != "" {
+		sv += "+" + p5;
+	}
+	return sv
+}
+
+
 func main() {
+	args := realos.Args[1:]
+	if len(args) == 0 {
+		sv := createSemVer(SemVerMajor, SemVerMinor, SemVerPatch, SemVerPrerelease,SemVerBuild)
+		f := "%13v %v\n"
+	    fmt.Printf(f, "Version:",sv)
+	    fmt.Printf(f, "Build Date:", BuildDate)
+	    fmt.Printf(f, "VCS Url:", BuildVcsUrl)
+	    fmt.Printf(f, "VCS Id:", BuildVcsId)
+	    fmt.Printf(f, "VCS Id Date:", BuildVcsIdDate)
+    }
 	os = &RealOS{}
 	plugin.Start(newTargetsPlugin())
 }
