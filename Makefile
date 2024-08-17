@@ -28,7 +28,13 @@ GO_LDFLAGS = -ldflags="-X '$(GOMODULECMD).SemVerMajor=$(SEMVER_MAJOR)' \
 	            -X '$(GOMODULECMD).BuildVcsId=$(BUILD_VCS_ID)' \
 		        -X '$(GOMODULECMD).BuildVcsIdDate=$(BUILD_VCS_ID_DATE)'"
 
-.PHONY: build test require-% release-% clean
+SEMVER_VERSION := $(if $(SEMVER_MAJOR),$(SEMVER_MAJOR),$(error Missing SEMVER_MAJOR))
+SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_MINOR),.$(SEMVER_MINOR),$(error Missing SEMVER_MINOR))
+SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PATCH),.$(SEMVER_PATCH),$(error Missing SEMVER_PATCH))
+SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PRERELEASE),-$(SEMVER_PRERELEASE))
+SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_BUILDMETA),+$(SEMVER_BUILDMETA))
+
+.PHONY: build test require-% release-% clean semver
 
 build:
 	CGO_ENABLED=0 go build $(GO_LDFLAGS) -o $(DEV_TEST_BUILD)
@@ -41,20 +47,22 @@ require-%:
 
 RELEASES := $(foreach target,$(TARGETS),release-$(target)-$(PROJECT))
 
-release-all: $(RELEASES)
+show-releases:
+	@ls -lA $(RELEASE_ROOT)
+	@echo ""
+
+release-all: $(RELEASES) show-releases
 
 define build-target
 release-$(1)/$(2)-$(PROJECT): # require-VERSION
-	@echo "Building $(PROJECT) $(SEMVER_VERSION) ($(1)/$(2)) ..."
-	CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)-$(1)-$(2)$(if $(patsubst windows,,$(1)),,.exe) $(GO_LDFLAGS)
-	@ls -la $(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)-$(1)-$(2)$(if $(patsubst windows,,$(1)),,.exe)
-	@echo ""
+	@echo "Building $(PROJECT) version $(SEMVER_VERSION) for $(1) $(2) ..."
+	@CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)-$(1)-$(2)$(if $(patsubst windows,,$(1)),,.exe) $(GO_LDFLAGS)
 endef
 
 $(foreach target,$(TARGETS),$(eval $(call build-target,$(word 1, $(subst /, ,$(target))),$(word 2, $(subst /, ,$(target))))))
 
 clean:
-	rm -rf $(CAROUSEL_PATH) $(RELEASE_ROOT)/* 
+	rm -rf $(DEV_TEST_BUILD) $(RELEASE_ROOT)/* 
 
 .DEFAULT_GOAL := release-all
 
