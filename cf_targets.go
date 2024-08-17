@@ -11,10 +11,10 @@ import (
 	realio "io/ioutil"
 	realos "os"
 
-	"github.com/cloudfoundry/cli/cf/configuration"
-	"github.com/cloudfoundry/cli/cf/configuration/confighelpers"
-	"github.com/cloudfoundry/cli/cf/configuration/coreconfig"
-	"github.com/cloudfoundry/cli/plugin"
+	"code.cloudfoundry.org/cli/cf/configuration"
+	"code.cloudfoundry.org/cli/cf/configuration/confighelpers"
+	"code.cloudfoundry.org/cli/cf/configuration/coreconfig"
+	"code.cloudfoundry.org/cli/plugin"
 )
 
 type TargetsPlugin struct {
@@ -57,7 +57,7 @@ var os OS
 var Major string
 var Minor string
 var Patch string
-var Prrls string  // prerelease
+var Prrls string // prerelease
 var Build string
 var GoArch string
 var GoOs string
