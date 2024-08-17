@@ -33,7 +33,7 @@ SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_MINOR),.$(SEMVER_MINOR),$(error
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PATCH),.$(SEMVER_PATCH),$(error Missing SEMVER_PATCH))
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PRERELEASE),-$(SEMVER_PRERELEASE))
 
-.PHONY: build test require-% release-% clean show-releases
+.PHONY: distbuild build require-% release-% clean distclean show-releases
 
 build: BUILD_RULE_CMD := CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
 	                     go build -ldflags="$(GO_LDFLAGS) \
@@ -56,7 +56,10 @@ show-releases:
 	@ls -lA $(RELEASE_ROOT)
 	@echo ""
 
-release-all: release-clean $(RELEASES) show-releases
+release-all: release-clean distbuild $(RELEASES) show-releases
+
+distbuild:
+	mkdir -p $(RELEASE_ROOT)
 
 define build-target
 release-$(1)/$(2)-$(PROJECT): # require-VERSION
@@ -75,26 +78,3 @@ release-clean:
 distclean: clean release-clean
 
 .DEFAULT_GOAL := release-all
-
-# test:
-#	ginkgo watch ./...
-	
-# test-ci:
-#	ginkgo  ./...
-
-# gen:
-#	go generate ./...
-# docker:
-#	docker build -t $(docker_registry) .
-
-# publish: docker
-#	docker push $(docker_registry)
-
-# fmt:
-#	find . -name '*.go' | while read -r f; do \
-#		gofmt -w -s "$$f"; \
-#	done
-
-# .DEFAULT_GOAL := docker
-
-# .PHONY: go-mod docker-build docker-push docker test fmt
