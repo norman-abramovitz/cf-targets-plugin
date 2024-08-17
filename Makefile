@@ -2,7 +2,7 @@ PROJECT        :=cf-targets-plugin
 GOOS           :=$(shell go env GOOS)
 GOARCH         :=$(shell go env GOARCH)
 GOMODULECMD    :=main
-RELEASE_ROOT   ?=release
+RELEASE_ROOT   ?=releases
 DEV_TEST_BUILD =./$(PROJECT)
 TARGETS        ?=linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64
 
@@ -18,26 +18,31 @@ BUILD_VCS_ID_DATE :=$(shell TZ=UTC0 git log -n 1 --date=iso-strict-local --forma
 
 build: SEMVER_PRERELEASE := dev
 
-GO_LDFLAGS = -ldflags="-X '$(GOMODULECMD).SemVerMajor=$(SEMVER_MAJOR)' \
-	            -X '$(GOMODULECMD).SemVerMinor=$(SEMVER_MINOR)' \
-	            -X '$(GOMODULECMD).SemVerPatch=$(SEMVER_PATCH)' \
-	            -X '$(GOMODULECMD).SemVerPrerelease=$(SEMVER_PRERELEASE)' \
-	            -X '$(GOMODULECMD).SemVerBuild=$(SEMVER_BUILDMETA)' \
-	            -X '$(GOMODULECMD).BuildDate=$(BUILD_DATE)' \
-	            -X '$(GOMODULECMD).BuildVcsUrl=$(BUILD_VCS_URL)' \
-	            -X '$(GOMODULECMD).BuildVcsId=$(BUILD_VCS_ID)' \
-		        -X '$(GOMODULECMD).BuildVcsIdDate=$(BUILD_VCS_ID_DATE)'"
+GO_LDFLAGS = -X '$(GOMODULECMD).SemVerMajor=$(SEMVER_MAJOR)' \
+	         -X '$(GOMODULECMD).SemVerMinor=$(SEMVER_MINOR)' \
+	         -X '$(GOMODULECMD).SemVerPatch=$(SEMVER_PATCH)' \
+	         -X '$(GOMODULECMD).SemVerPrerelease=$(SEMVER_PRERELEASE)' \
+	         -X '$(GOMODULECMD).SemVerBuild=$(SEMVER_BUILDMETA)' \
+	         -X '$(GOMODULECMD).BuildDate=$(BUILD_DATE)' \
+	         -X '$(GOMODULECMD).BuildVcsUrl=$(BUILD_VCS_URL)' \
+	         -X '$(GOMODULECMD).BuildVcsId=$(BUILD_VCS_ID)' \
+		     -X '$(GOMODULECMD).BuildVcsIdDate=$(BUILD_VCS_ID_DATE)'
 
 SEMVER_VERSION := $(if $(SEMVER_MAJOR),$(SEMVER_MAJOR),$(error Missing SEMVER_MAJOR))
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_MINOR),.$(SEMVER_MINOR),$(error Missing SEMVER_MINOR))
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PATCH),.$(SEMVER_PATCH),$(error Missing SEMVER_PATCH))
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PRERELEASE),-$(SEMVER_PRERELEASE))
-SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_BUILDMETA),+$(SEMVER_BUILDMETA))
 
-.PHONY: build test require-% release-% clean semver
+.PHONY: build test require-% release-% clean show-releases
 
-build:
-	CGO_ENABLED=0 go build $(GO_LDFLAGS) -o $(DEV_TEST_BUILD)
+build: BUILD_RULE_CMD := CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
+	                     go build -ldflags="$(GO_LDFLAGS) \
+					     -X '$(GOMODULECMD).GoOs=$(GOOS)' \
+					     -X '$(GOMODULECMD).GoArch=$(GOARCH)'" \
+				   	     -o $(DEV_TEST_BUILD)
+
+build: clean
+	$(BUILD_RULE_CMD)
 
 require-%:
 	@ if [ "${${*}}" = "" ]; then \
@@ -51,18 +56,23 @@ show-releases:
 	@ls -lA $(RELEASE_ROOT)
 	@echo ""
 
-release-all: $(RELEASES) show-releases
+release-all: release-clean $(RELEASES) show-releases
 
 define build-target
 release-$(1)/$(2)-$(PROJECT): # require-VERSION
 	@echo "Building $(PROJECT) version $(SEMVER_VERSION) for $(1) $(2) ..."
-	@CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)-$(1)-$(2)$(if $(patsubst windows,,$(1)),,.exe) $(GO_LDFLAGS)
+	CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3))$(if $(patsubst windows,,$(1)),,.exe) -ldflags="$(GO_LDFLAGS) -X '$(GOMODULECMD).GoOs=$(1)' -X '$(GOMODULECMD).GoArch=$(2)'"
 endef
 
-$(foreach target,$(TARGETS),$(eval $(call build-target,$(word 1, $(subst /, ,$(target))),$(word 2, $(subst /, ,$(target))))))
+$(foreach target,$(TARGETS), $(eval $(call build-target,$(word 1, $(subst /, ,$(target))),$(word 2, $(subst /, ,$(target))),$(SEMVER_BUILDMETA))))
 
 clean:
-	rm -rf $(DEV_TEST_BUILD) $(RELEASE_ROOT)/* 
+	rm -rf $(DEV_TEST_BUILD) 
+
+release-clean:
+	rm -rf $(RELEASE_ROOT)/* 
+
+distclean: clean release-clean
 
 .DEFAULT_GOAL := release-all
 

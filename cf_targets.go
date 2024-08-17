@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 
 	realio "io/ioutil"
 	realos "os"
@@ -59,11 +59,10 @@ var SemVerMinor string
 var SemVerPatch string
 var SemVerPrerelease string
 var SemVerBuild string
-var BuildDate   string
+var BuildDate string
 var BuildVcsUrl string
-var BuildVcsId   string
+var BuildVcsId string
 var BuildVcsIdDate string
-
 var GoArch string
 var GoOs string
 
@@ -74,7 +73,6 @@ func getIntOrPanic(toInt string) int {
 	}
 	return theInt
 }
-
 
 func newTargetsPlugin() *TargetsPlugin {
 	configPath, _ := confighelpers.DefaultFilePath()
@@ -135,38 +133,52 @@ func (c *TargetsPlugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func createSemVer(major, minor, patch, prerelease, build string)( string) {
+func createBuildMeta(buildOs, buildArch, build string) string {
+	p1 := strings.TrimSpace(buildOs)
+	p2 := strings.TrimSpace(buildArch)
+	p3 := strings.TrimSpace(build)
+	if p1 == "" || p2 == "" {
+		panic(fmt.Sprintf("Go meta data is missing one of its parts: %s, %s ", p1, p2))
+	}
+	b := strings.Join([]string{p1, p2}, ".")
+	if p3 != "" {
+		b += "." + p3
+	}
+	return b
+}
+
+func createSemVer(major, minor, patch, prerelease, build string) string {
 	p1 := strings.TrimSpace(major)
 	p2 := strings.TrimSpace(minor)
 	p3 := strings.TrimSpace(patch)
 	p4 := strings.TrimSpace(prerelease)
 	p5 := strings.TrimSpace(build)
 	if p1 == "" || p2 == "" || p3 == "" {
-		panic(fmt.Sprintf("Semanic version is missing one of its parts: %s.%s.%s", p1,p2,p3)) 
+		panic(fmt.Sprintf("Semanic version is missing one of its parts: %s.%s.%s", p1, p2, p3))
 	}
 
-	sv := strings.Join([]string{p1,p2,p3},".")
+	sv := strings.Join([]string{p1, p2, p3}, ".")
 	if p4 != "" {
-		sv += "-" + p4;
+		sv += "-" + p4
 	}
 	if p5 != "" {
-		sv += "+" + p5;
+		sv += "+" + p5
 	}
 	return sv
 }
 
-
 func main() {
 	args := realos.Args[1:]
 	if len(args) == 0 {
-		sv := createSemVer(SemVerMajor, SemVerMinor, SemVerPatch, SemVerPrerelease,SemVerBuild)
+		bm := createBuildMeta(GoOs, GoArch, SemVerBuild)
+		sv := createSemVer(SemVerMajor, SemVerMinor, SemVerPatch, SemVerPrerelease, bm)
 		f := "%13v %v\n"
-	    fmt.Printf(f, "Version:",sv)
-	    fmt.Printf(f, "Build Date:", BuildDate)
-	    fmt.Printf(f, "VCS Url:", BuildVcsUrl)
-	    fmt.Printf(f, "VCS Id:", BuildVcsId)
-	    fmt.Printf(f, "VCS Id Date:", BuildVcsIdDate)
-    }
+		fmt.Printf(f, "Version:", sv)
+		fmt.Printf(f, "Build Date:", BuildDate)
+		fmt.Printf(f, "VCS Url:", BuildVcsUrl)
+		fmt.Printf(f, "VCS Id:", BuildVcsId)
+		fmt.Printf(f, "VCS Id Date:", BuildVcsIdDate)
+	}
 	os = &RealOS{}
 	plugin.Start(newTargetsPlugin())
 }
