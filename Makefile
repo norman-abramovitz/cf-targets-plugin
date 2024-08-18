@@ -28,6 +28,8 @@ GO_LDFLAGS = -X '$(GOMODULECMD).SemVerMajor=$(SEMVER_MAJOR)' \
 	         -X '$(GOMODULECMD).BuildVcsId=$(BUILD_VCS_ID)' \
 		     -X '$(GOMODULECMD).BuildVcsIdDate=$(BUILD_VCS_ID_DATE)'
 
+# The build meta data is added when the build is done
+#
 SEMVER_VERSION := $(if $(SEMVER_MAJOR),$(SEMVER_MAJOR),$(error Missing SEMVER_MAJOR))
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_MINOR),.$(SEMVER_MINOR),$(error Missing SEMVER_MINOR))
 SEMVER_VERSION := $(SEMVER_VERSION)$(if $(SEMVER_PATCH),.$(SEMVER_PATCH),$(error Missing SEMVER_PATCH))
@@ -56,24 +58,33 @@ show-releases:
 	@ls -lA $(RELEASE_ROOT)
 	@echo ""
 
+sha1-releases:
+
 release-all: release-clean distbuild $(RELEASES) show-releases
 
 distbuild:
-	mkdir -p $(RELEASE_ROOT)
+	@mkdir -p $(RELEASE_ROOT)
 
 define build-target
+release-$(1)/$(2)-$(PROJECT): RELEASE_GO_LDFLAGS:=-ldflags="$(GO_LDFLAGS) -X '$(GOMODULECMD).GoOs=$(1)' -X '$(GOMODULECMD).GoArch=$(2)'"
+
+release-$(1)/$(2)-$(PROJECT): RELEASE_EXECUTABLE:=$(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3))$(if $(patsubst windows,,$(1)),,.exe)
+
+release-$(1)/$(2)-$(PROJECT): RELEASE_SHA1_FILE:=$(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3)).sha1
+
 release-$(1)/$(2)-$(PROJECT): # require-VERSION
-	@echo "Building $(PROJECT) version $(SEMVER_VERSION) for $(1) $(2) ..."
-	CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3))$(if $(patsubst windows,,$(1)),,.exe) -ldflags="$(GO_LDFLAGS) -X '$(GOMODULECMD).GoOs=$(1)' -X '$(GOMODULECMD).GoArch=$(2)'"
+	@echo "Building $$(PROJECT) version $$(SEMVER_VERSION) for $(1) $(2) ..."
+	@CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $$(RELEASE_EXECUTABLE) $$(RELEASE_GO_LDFLAGS)
+	@openssl sha1 -r $$(RELEASE_EXECUTABLE) > $$(RELEASE_SHA1_FILE)
 endef
 
 $(foreach target,$(TARGETS), $(eval $(call build-target,$(word 1, $(subst /, ,$(target))),$(word 2, $(subst /, ,$(target))),$(SEMVER_BUILDMETA))))
 
 clean:
-	rm -rf $(DEV_TEST_BUILD) 
+	@rm -rf $(DEV_TEST_BUILD) 
 
 release-clean:
-	rm -rf $(RELEASE_ROOT)/* 
+	@rm -rf $(RELEASE_ROOT)/* 
 
 distclean: clean release-clean
 
