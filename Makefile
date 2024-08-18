@@ -12,7 +12,7 @@ SEMVER_PATCH    ?=0
 SEMVER_PRERELEASE ?=
 SEMVER_BUILDMETA  ?=
 BUILD_DATE        :=$(shell date -u -Iseconds)
-BUILD_VCS_URL     :=$(shell git config --get remote.origin.url) 
+BUILD_VCS_URL     :=$(shell git config --get remote.origin.url)
 BUILD_VCS_ID      :=$(shell git log -n 1 --date=iso-strict-local --format="%h")
 BUILD_VCS_ID_DATE :=$(shell TZ=UTC0 git log -n 1 --date=iso-strict-local --format='%ad')
 
