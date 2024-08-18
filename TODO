@@ -5,3 +5,9 @@
 
 2. Cleanup building
 3. Add pipelining
+
+
+# One way to get values from the executable that is not stripped
+use GoReSym
+github.com/mandiant/GoReSym.git
+../../Tools/GoReSym/GoReSym  releases/cf-targets-plugin-2.1.0+windows.amd64.exe | jq '.BuildInfo.Settings|.[]|select(.Key=="-ldflags").Value'
