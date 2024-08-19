@@ -68,14 +68,16 @@ distbuild:
 define build-target
 release-$(1)/$(2)-$(PROJECT): RELEASE_GO_LDFLAGS:=-ldflags="$(GO_LDFLAGS) -X '$(GOMODULECMD).GoOs=$(1)' -X '$(GOMODULECMD).GoArch=$(2)'"
 
-release-$(1)/$(2)-$(PROJECT): RELEASE_EXECUTABLE:=$(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3))$(if $(patsubst windows,,$(1)),,.exe)
+release-$(1)/$(2)-$(PROJECT): RELEASE_EXECUTABLE_BASE:=$(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3))
 
-release-$(1)/$(2)-$(PROJECT): RELEASE_SHA1_FILE:=$(RELEASE_ROOT)/$(PROJECT)-$(SEMVER_VERSION)+$(1).$(2)$(if $(3),.$(3)).sha1
+release-$(1)/$(2)-$(PROJECT): RELEASE_EXECUTABLE:=$$(RELEASE_EXECUTABLE_BASE)$(if $(patsubst windows,,$(1)),,.exe)
+
+release-$(1)/$(2)-$(PROJECT): RELEASE_EXECUTABLE_SHA1:=$$(RELEASE_EXECUTABLE_BASE).sha1
 
 release-$(1)/$(2)-$(PROJECT): # require-VERSION
 	@echo "Building $$(PROJECT) version $$(SEMVER_VERSION) for $(1) $(2) ..."
 	@CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) go build -o $$(RELEASE_EXECUTABLE) $$(RELEASE_GO_LDFLAGS)
-	@openssl sha1 -r $$(RELEASE_EXECUTABLE) > $$(RELEASE_SHA1_FILE)
+	@openssl sha1 -r $$(RELEASE_EXECUTABLE) > $$(RELEASE_EXECUTABLE_SHA1)
 endef
 
 $(foreach target,$(TARGETS), $(eval $(call build-target,$(word 1, $(subst /, ,$(target))),$(word 2, $(subst /, ,$(target))),$(SEMVER_BUILDMETA))))
