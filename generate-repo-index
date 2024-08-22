@@ -1,0 +1,35 @@
+RELEASE_ROOT="${1}"
+PROJECT="${2}"
+SEMVER_VERSION="${3}"
+BUILD_DATE="${4}"
+
+cat <<EOF >${RELEASE_ROOT}/repo-index.yml 
+plugins:
+- authors:
+  - contact: gwestenberg@pivotal.io
+    homepage: http://github.com/guidowb
+    name: Guido Westenberg
+  - contact: nabramovitz@fivetwenty.io
+    homepage: http://github.com/norman-abramovitz
+    name: Norman Abramovitz
+  binaries:
+  - checksum: $(cat ${RELEASE_ROOT}/${PROJECT}*darwin.amd64*.sha1)) 
+    platform: osx-amd64
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/${SEMVER_VERSION}/bin/osx-amd64/cf-targets-plugin
+  - checksum: $(cat ${RELEASE_ROOT}/${PROJECT}*darwin.arm64*.sha1)) 
+    platform: osx-arm64
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/${SEMVER_VERSION}/bin/osx-arm64/cf-targets-plugin
+  - checksum: $(cat ${RELEASE_ROOT}/${PROJECT}*windows.amd64*.sha1)) 
+    platform: win64
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/${SEMVER_VERSION}/bin/win64/cf-targets-plugin.exe
+  - checksum: $(cat ${RELEASE_ROOT}/${PROJECT}*linux.amd64*.sha1)) 
+    platform: linux64
+    url: http://github.com/norman-abramovitz/cf-targets-plugin/raw/${SEMVER_VERSION}/bin/linux64/cf-targets-plugin
+  company: null
+  created: "2015-04-17"
+  description: Easily manage multiple CF targets
+  homepage: http://github.com/norman-abramovitz/cf-targets-plugin
+  name: Targets
+  updated: ${BUILD_DATE}
+  version: ${SEMVER_VERSION}
+EOF
