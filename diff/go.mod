@@ -1,3 +1,3 @@
-module github.com/norman-abramovitz/cf-targets-plugin/diff
+module diff
 
 go 1.23.0

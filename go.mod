@@ -2,7 +2,7 @@ module github.com/norman-abramovitz/cf-targets-plugin
 
 go 1.23.0
 
-replace github.com/norman-abramovitz/cf-targets-plugin/diff => /Users/norm/Projects/CloudFoundry/cf-targets-plugin/diff
+replace github.com/norman-abramovitz/cf-targets-plugin/diff => ./diff
 
 require (
 	code.cloudfoundry.org/cli v0.0.0-20240709143557-6248ca371f21
