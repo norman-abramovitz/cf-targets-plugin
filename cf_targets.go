@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,7 +17,8 @@ import (
 	"code.cloudfoundry.org/cli/cf/configuration/confighelpers"
 	"code.cloudfoundry.org/cli/cf/configuration/coreconfig"
 	"code.cloudfoundry.org/cli/plugin"
-	"github.com/go-corelibs/diff"
+	"github.com/norman-abramovitz/cf-targets-plugin/diff"
+	"github.com/norman-abramovitz/cf-targets-plugin/diff/myers"
 )
 
 type TargetsPlugin struct {
@@ -180,6 +182,24 @@ func main() {
 		fmt.Printf(f, "VCS Url:", BuildVcsUrl)
 		fmt.Printf(f, "VCS Id:", BuildVcsId)
 		fmt.Printf(f, "VCS Id Date:", BuildVcsIdDate)
+
+		fmt.Printf("\nThe code in the diff directory is copyrighted by The Go Authors.")
+		fmt.Printf("\nThe copyrighted code and its LICENSE file can be found there.\n\n")
+		fmt.Printf("Copyright 2009 The Go Authors.\n\n")
+
+		fmt.Printf("Redistribution and use in source and binary forms, with or without\n")
+		fmt.Printf("modification, are permitted provided that the following conditions are\n")
+		fmt.Printf("met:\n\n")
+
+		fmt.Printf("   * Redistributions of source code must retain the above copyright\n")
+		fmt.Printf("     notice, this list of conditions and the following disclaimer.\n")
+		fmt.Printf("   * Redistributions in binary form must reproduce the above\n")
+		fmt.Printf("     copyright notice, this list of conditions and the following disclaimer\n")
+		fmt.Printf("     in the documentation and/or other materials provided with the\n")
+		fmt.Printf("     distribution.\n")
+		fmt.Printf("   * Neither the name of Google LLC nor the names of its\n")
+		fmt.Printf("     contributors may be used to endorse or promote products derived from\n")
+		fmt.Printf("     this software without specific prior written permission.\n")
 	}
 	os = &RealOS{}
 	plugin.Start(newTargetsPlugin())
@@ -207,35 +227,43 @@ func (c *TargetsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	}
 }
 
+func createRedaction(jsonMap map[string]interface{}, key string) string {
+	var valueAssertion interface{}
+	valueAssertion = jsonMap[key]
+	currentSum := sha256.Sum256([]byte(valueAssertion.(string)))
+	return fmt.Sprintf("REDACTED sha256(%x)", currentSum)
+}
+
 func showDiff(c *TargetsPlugin, targetPath string) {
 	var json_data_current map[string]interface{}
 	var json_data_target map[string]interface{}
+
 	currentContent, _ := os.ReadFile(c.currentPath)
 	targetContent, _ := os.ReadFile(targetPath)
 	json.Unmarshal(currentContent, &json_data_current)
 	json.Unmarshal(targetContent, &json_data_target)
-	// Remove things that change often and make the diff output unreadable.
-	// delete(json_data_current, "AccessToken")
-	// delete(json_data_current, "RefreshToken")
-	// delete(json_data_target, "AccessToken")
-	// delete(json_data_target, "RefreshToken")
-	json_data_current["AccessToken"] = "<REDACTED1>"
-	json_data_target["AccessToken"] = "<REDACTED2>"
-	json_data_current["RefreshToken"] = "<REDACTED>"
-	json_data_target["RefreshToken"] = "<REDACTED>"
-	json_data_current["UAAOAuthClientSecret"] = "<REDACTED>"
-	json_data_target["UAAOAuthClientSecret"] = "<REDACTED>"
+
+	currentValue := createRedaction(json_data_current, "AccessToken")
+	targetValue := createRedaction(json_data_target, "AccessToken")
+	json_data_current["AccessToken"] = currentValue
+	json_data_target["AccessToken"] = targetValue
+
+	currentValue = createRedaction(json_data_current, "RefreshToken")
+	targetValue = createRedaction(json_data_target, "RefreshToken")
+	json_data_current["RefreshToken"] = currentValue
+	json_data_target["RefreshToken"] = targetValue
+
+	currentValue = createRedaction(json_data_current, "UAAOAuthClientSecret")
+	targetValue = createRedaction(json_data_target, "UAAOAuthClientSecret")
+	json_data_current["UAAOAuthClientSecret"] = currentValue
+	json_data_target["UAAOAuthClientSecret"] = targetValue
 
 	current, _ := json.MarshalIndent(json_data_current, "", " ")
 	target, _ := json.MarshalIndent(json_data_target, "", " ")
 
-	delta := diff.New("Current", string(current), string(target))
-	if unified, err := delta.Unified(); err != nil {
-		panic(err)
-	} else {
-		unified = strings.Replace(unified, "b/Current", "b/Target", 1)
-		fmt.Println(unified)
-	}
+	edits := myers.ComputeEdits(string(current) + "\n", string(target) + "\n")
+	diff := fmt.Sprint(diff.ToUnified("Current", "Target", string(current), edits, 0))
+	fmt.Println(diff)
 }
 
 func (c *TargetsPlugin) TargetsCommand(args []string) {
