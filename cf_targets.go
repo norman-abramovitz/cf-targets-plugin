@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 	"code.cloudfoundry.org/cli/cf/configuration/confighelpers"
 	"code.cloudfoundry.org/cli/cf/configuration/coreconfig"
 	"code.cloudfoundry.org/cli/plugin"
+	"github.com/go-corelibs/diff"
 )
 
 type TargetsPlugin struct {
@@ -205,6 +207,37 @@ func (c *TargetsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	}
 }
 
+func showDiff(c *TargetsPlugin, targetPath string) {
+	var json_data_current map[string]interface{}
+	var json_data_target map[string]interface{}
+	currentContent, _ := os.ReadFile(c.currentPath)
+	targetContent, _ := os.ReadFile(targetPath)
+	json.Unmarshal(currentContent, &json_data_current)
+	json.Unmarshal(targetContent, &json_data_target)
+	// Remove things that change often and make the diff output unreadable.
+	// delete(json_data_current, "AccessToken")
+	// delete(json_data_current, "RefreshToken")
+	// delete(json_data_target, "AccessToken")
+	// delete(json_data_target, "RefreshToken")
+	json_data_current["AccessToken"] = "<REDACTED1>"
+	json_data_target["AccessToken"] = "<REDACTED2>"
+	json_data_current["RefreshToken"] = "<REDACTED>"
+	json_data_target["RefreshToken"] = "<REDACTED>"
+	json_data_current["UAAOAuthClientSecret"] = "<REDACTED>"
+	json_data_target["UAAOAuthClientSecret"] = "<REDACTED>"
+
+	current, _ := json.MarshalIndent(json_data_current, "", " ")
+	target, _ := json.MarshalIndent(json_data_target, "", " ")
+
+	delta := diff.New("Current", string(current), string(target))
+	if unified, err := delta.Unified(); err != nil {
+		panic(err)
+	} else {
+		unified = strings.Replace(unified, "b/Current", "b/Target", 1)
+		fmt.Println(unified)
+	}
+}
+
 func (c *TargetsPlugin) TargetsCommand(args []string) {
 	if len(args) != 1 {
 		c.exitWithUsage("targets")
@@ -248,6 +281,7 @@ func (c *TargetsPlugin) SetTargetCommand(args []string) {
 		c.linkCurrent(targetPath)
 	} else {
 		fmt.Println("Your current target has not been saved. Use save-target first, or use -f to discard your changes.")
+		showDiff(c, targetPath)
 		panic(1)
 	}
 	fmt.Println("Set target to", targetName)
@@ -289,6 +323,7 @@ func (c *TargetsPlugin) SaveCurrentTargetCommand(force bool) {
 	if c.status.currentNeedsSaving && !force {
 		fmt.Println("You've made substantial changes to the current target.")
 		fmt.Println("Use -f if you intend to overwrite the target named", targetName, "or provide an alternate name")
+		showDiff(c, c.configPath)
 		panic(1)
 	}
 	c.copyContents(c.configPath, targetPath)

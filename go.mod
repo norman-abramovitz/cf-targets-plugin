@@ -6,6 +6,7 @@ toolchain go1.22.6
 
 require (
 	code.cloudfoundry.org/cli v0.0.0-20240709143557-6248ca371f21
+	github.com/go-corelibs/diff v1.1.1
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
 )
@@ -36,20 +37,25 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.5 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/go-corelibs/maps v1.0.2 // indirect
+	github.com/go-corelibs/maths v1.0.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
+	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
+	github.com/maruel/natural v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
 	golang.org/x/crypto v0.26.0 // indirect
