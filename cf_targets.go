@@ -261,7 +261,7 @@ func showDiff(c *TargetsPlugin, targetPath string) {
 	current, _ := json.MarshalIndent(json_data_current, "", " ")
 	target, _ := json.MarshalIndent(json_data_target, "", " ")
 
-	edits := myers.ComputeEdits(string(current) + "\n", string(target) + "\n")
+	edits := myers.ComputeEdits(string(current)+"\n", string(target)+"\n")
 	diff := fmt.Sprint(diff.ToUnified("Current", "Target", string(current), edits, 0))
 	fmt.Println(diff)
 }
