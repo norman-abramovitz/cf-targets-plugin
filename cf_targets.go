@@ -183,13 +183,10 @@ func main() {
 		fmt.Printf(f, "VCS Id:", BuildVcsId)
 		fmt.Printf(f, "VCS Id Date:", BuildVcsIdDate)
 
-		fmt.Printf("\nThe code in the diff directory is copyrighted by The Go Authors.")
-		fmt.Printf("\nThe copyrighted code and its LICENSE file can be found there.\n\n")
-		fmt.Printf("Copyright 2009 The Go Authors.\n\n")
+		fmt.Printf("\nCopyright 2009 The Go Authors.   (diff directory tree only)\n\n")
 
 		fmt.Printf("Redistribution and use in source and binary forms, with or without\n")
-		fmt.Printf("modification, are permitted provided that the following conditions are\n")
-		fmt.Printf("met:\n\n")
+		fmt.Printf("modification, are permitted provided that the following conditions are met:\n\n")
 
 		fmt.Printf("   * Redistributions of source code must retain the above copyright\n")
 		fmt.Printf("     notice, this list of conditions and the following disclaimer.\n")
