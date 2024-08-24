@@ -234,36 +234,38 @@ func createRedaction(jsonMap map[string]interface{}, key string) string {
 	return fmt.Sprintf("REDACTED sha256(%x)", currentSum)
 }
 
-func showDiff(c *TargetsPlugin, targetPath string) {
+func (c *TargetsPlugin) showDiff(targetPath string) {
 	var json_data_current map[string]interface{}
 	var json_data_target map[string]interface{}
+	var err error
 
-	currentContent, _ := os.ReadFile(c.currentPath)
-	targetContent, _ := os.ReadFile(targetPath)
-	json.Unmarshal(currentContent, &json_data_current)
-	json.Unmarshal(targetContent, &json_data_target)
+	currentContent, err := os.ReadFile(c.currentPath)
+	c.checkError(err)
+	targetContent, err := os.ReadFile(targetPath)
+	c.checkError(err)
+	err = json.Unmarshal(currentContent, &json_data_current)
+	c.checkError(err)
+	err = json.Unmarshal(targetContent, &json_data_target)
+	c.checkError(err)
 
-	currentValue := createRedaction(json_data_current, "AccessToken")
-	targetValue := createRedaction(json_data_target, "AccessToken")
-	json_data_current["AccessToken"] = currentValue
-	json_data_target["AccessToken"] = targetValue
+	json_data_current["AccessToken"] = createRedaction(json_data_current, "AccessToken")
+	json_data_target["AccessToken"] = createRedaction(json_data_target, "AccessToken")
 
-	currentValue = createRedaction(json_data_current, "RefreshToken")
-	targetValue = createRedaction(json_data_target, "RefreshToken")
-	json_data_current["RefreshToken"] = currentValue
-	json_data_target["RefreshToken"] = targetValue
+	json_data_current["RefreshToken"] = createRedaction(json_data_current, "RefreshToken")
+	json_data_target["RefreshToken"] = createRedaction(json_data_target, "RefreshToken")
 
-	currentValue = createRedaction(json_data_current, "UAAOAuthClientSecret")
-	targetValue = createRedaction(json_data_target, "UAAOAuthClientSecret")
-	json_data_current["UAAOAuthClientSecret"] = currentValue
-	json_data_target["UAAOAuthClientSecret"] = targetValue
+	json_data_current["UAAOAuthClientSecret"] = createRedaction(json_data_current, "UAAOAuthClientSecret")
+	json_data_target["UAAOAuthClientSecret"] = createRedaction(json_data_target, "UAAOAuthClientSecret")
 
-	current, _ := json.MarshalIndent(json_data_current, "", " ")
-	target, _ := json.MarshalIndent(json_data_target, "", " ")
+	current, err := json.MarshalIndent(json_data_current, "", " ")
+	c.checkError(err)
+	target, err := json.MarshalIndent(json_data_target, "", " ")
+	c.checkError(err)
 
-	edits := myers.ComputeEdits(string(current)+"\n", string(target)+"\n")
-	diff := fmt.Sprint(diff.ToUnified("Current", "Target", string(current), edits, 0))
-	fmt.Println(diff)
+	edits := myers.ComputeEdits(string(current), string(target))
+	udiff, err := diff.ToUnified("Current", "Target", string(current), edits, 0)
+	c.checkError(err)
+	fmt.Println(udiff)
 }
 
 func (c *TargetsPlugin) TargetsCommand(args []string) {
@@ -309,7 +311,7 @@ func (c *TargetsPlugin) SetTargetCommand(args []string) {
 		c.linkCurrent(targetPath)
 	} else {
 		fmt.Println("Your current target has not been saved. Use save-target first, or use -f to discard your changes.")
-		showDiff(c, targetPath)
+		c.showDiff(targetPath)
 		panic(1)
 	}
 	fmt.Println("Set target to", targetName)
@@ -351,7 +353,7 @@ func (c *TargetsPlugin) SaveCurrentTargetCommand(force bool) {
 	if c.status.currentNeedsSaving && !force {
 		fmt.Println("You've made substantial changes to the current target.")
 		fmt.Println("Use -f if you intend to overwrite the target named", targetName, "or provide an alternate name")
-		showDiff(c, c.configPath)
+		c.showDiff(c.configPath)
 		panic(1)
 	}
 	c.copyContents(c.configPath, targetPath)
