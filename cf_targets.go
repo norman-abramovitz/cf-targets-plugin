@@ -260,9 +260,14 @@ func (c *TargetsPlugin) showDiff(targetPath string) {
 	c.checkError(err)
 
 	edits := myers.ComputeEdits(string(current), string(target))
-	udiff, err := diff.ToUnified("Current", "Target", string(current), edits, 0)
-	c.checkError(err)
-	fmt.Println(udiff)
+	if len(edits) != 0 {
+		udiff, err := diff.ToUnified("Current", "Target", string(current), edits, 0)
+		c.checkError(err)
+		fmt.Println(udiff)
+	} else {
+		fmt.Println("hmmm no differences")
+	}
+
 }
 
 func (c *TargetsPlugin) TargetsCommand(args []string) {
