@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"path/filepath"
@@ -15,6 +17,8 @@ import (
 	"code.cloudfoundry.org/cli/cf/configuration/confighelpers"
 	"code.cloudfoundry.org/cli/cf/configuration/coreconfig"
 	"code.cloudfoundry.org/cli/plugin"
+	"github.com/norman-abramovitz/cf-targets-plugin/diff"
+	"github.com/norman-abramovitz/cf-targets-plugin/diff/myers"
 )
 
 type TargetsPlugin struct {
@@ -178,6 +182,21 @@ func main() {
 		fmt.Printf(f, "VCS Url:", BuildVcsUrl)
 		fmt.Printf(f, "VCS Id:", BuildVcsId)
 		fmt.Printf(f, "VCS Id Date:", BuildVcsIdDate)
+
+		fmt.Printf("\nCopyright 2009 The Go Authors.   (diff directory tree only)\n\n")
+
+		fmt.Printf("Redistribution and use in source and binary forms, with or without\n")
+		fmt.Printf("modification, are permitted provided that the following conditions are met:\n\n")
+
+		fmt.Printf("   * Redistributions of source code must retain the above copyright\n")
+		fmt.Printf("     notice, this list of conditions and the following disclaimer.\n")
+		fmt.Printf("   * Redistributions in binary form must reproduce the above\n")
+		fmt.Printf("     copyright notice, this list of conditions and the following disclaimer\n")
+		fmt.Printf("     in the documentation and/or other materials provided with the\n")
+		fmt.Printf("     distribution.\n")
+		fmt.Printf("   * Neither the name of Google LLC nor the names of its\n")
+		fmt.Printf("     contributors may be used to endorse or promote products derived from\n")
+		fmt.Printf("     this software without specific prior written permission.\n")
 	}
 	os = &RealOS{}
 	plugin.Start(newTargetsPlugin())
@@ -203,6 +222,52 @@ func (c *TargetsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	} else if args[0] == "delete-target" {
 		c.DeleteTargetCommand(args)
 	}
+}
+
+func createRedaction(jsonMap map[string]interface{}, key string) string {
+	var valueAssertion interface{}
+	valueAssertion = jsonMap[key]
+	currentSum := sha256.Sum256([]byte(valueAssertion.(string)))
+	return fmt.Sprintf("REDACTED sha256(%x)", currentSum)
+}
+
+func (c *TargetsPlugin) showDiff(targetPath string) {
+	var json_data_current map[string]interface{}
+	var json_data_target map[string]interface{}
+	var err error
+
+	currentContent, err := os.ReadFile(c.currentPath)
+	c.checkError(err)
+	targetContent, err := os.ReadFile(targetPath)
+	c.checkError(err)
+	err = json.Unmarshal(currentContent, &json_data_current)
+	c.checkError(err)
+	err = json.Unmarshal(targetContent, &json_data_target)
+	c.checkError(err)
+
+	json_data_current["AccessToken"] = createRedaction(json_data_current, "AccessToken")
+	json_data_target["AccessToken"] = createRedaction(json_data_target, "AccessToken")
+
+	json_data_current["RefreshToken"] = createRedaction(json_data_current, "RefreshToken")
+	json_data_target["RefreshToken"] = createRedaction(json_data_target, "RefreshToken")
+
+	json_data_current["UAAOAuthClientSecret"] = createRedaction(json_data_current, "UAAOAuthClientSecret")
+	json_data_target["UAAOAuthClientSecret"] = createRedaction(json_data_target, "UAAOAuthClientSecret")
+
+	current, err := json.MarshalIndent(json_data_current, "", " ")
+	c.checkError(err)
+	target, err := json.MarshalIndent(json_data_target, "", " ")
+	c.checkError(err)
+
+	edits := myers.ComputeEdits(string(current), string(target))
+	if len(edits) != 0 {
+		udiff, err := diff.ToUnified("Current", "Target", string(current), edits, 0)
+		c.checkError(err)
+		fmt.Println(udiff)
+	} else {
+		fmt.Println("hmmm no differences")
+	}
+
 }
 
 func (c *TargetsPlugin) TargetsCommand(args []string) {
@@ -248,6 +313,7 @@ func (c *TargetsPlugin) SetTargetCommand(args []string) {
 		c.linkCurrent(targetPath)
 	} else {
 		fmt.Println("Your current target has not been saved. Use save-target first, or use -f to discard your changes.")
+		c.showDiff(targetPath)
 		panic(1)
 	}
 	fmt.Println("Set target to", targetName)
@@ -289,6 +355,7 @@ func (c *TargetsPlugin) SaveCurrentTargetCommand(force bool) {
 	if c.status.currentNeedsSaving && !force {
 		fmt.Println("You've made substantial changes to the current target.")
 		fmt.Println("Use -f if you intend to overwrite the target named", targetName, "or provide an alternate name")
+		c.showDiff(c.configPath)
 		panic(1)
 	}
 	c.copyContents(c.configPath, targetPath)

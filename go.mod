@@ -1,11 +1,12 @@
 module github.com/norman-abramovitz/cf-targets-plugin
 
-go 1.22.5
+go 1.23.0
 
-toolchain go1.22.6
+replace github.com/norman-abramovitz/cf-targets-plugin/diff => ./diff
 
 require (
 	code.cloudfoundry.org/cli v0.0.0-20240709143557-6248ca371f21
+	github.com/norman-abramovitz/cf-targets-plugin/diff v0.0.0-00010101000000-000000000000
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
 )
