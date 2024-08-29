@@ -65,6 +65,10 @@ build: clean
 	@echo "Building $(DEV_TEST_BUILD)"
 	$(BUILD_RULE_CMD)
 
+
+install: build
+	cf install-plugin -f $(DEV_TEST_BUILD)
+
 require-%:
 	@ if [ "${${*}}" = "" ]; then \
 		echo "Environment variable $* not set"; \
