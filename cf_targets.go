@@ -21,6 +21,12 @@ import (
 	"github.com/norman-abramovitz/cf-targets-plugin/diff/myers"
 )
 
+// There are three files that target plugin keeps track of
+// config file is the file the cf-cli maintains directly.
+// current file is the file the target plugin believes is the active file
+//              and is normally a link to a target file.
+// target files are files that have saved copies of the config file
+
 type TargetsPlugin struct {
 	configPath  string
 	targetsPath string
@@ -70,10 +76,11 @@ var BuildVcsIdDate string
 var GoArch string
 var GoOs string
 
-func getIntOrPanic(toInt string) int {
+func getVersion(version, toInt string) int {
 	theInt, err := strconv.Atoi(toInt)
 	if err != nil {
-		panic("unable to parse version: " + err.Error())
+		theInt = 0
+		fmt.Printf("Warning: %v for %v version value.  Defaulting to a zero value\n", err.Error(), version)
 	}
 	return theInt
 }
@@ -94,9 +101,9 @@ func (c *TargetsPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: "cf-targets",
 		Version: plugin.VersionType{
-			Major: getIntOrPanic(SemVerMajor),
-			Minor: getIntOrPanic(SemVerMinor),
-			Build: getIntOrPanic(SemVerPatch),
+			Major: getVersion("major", SemVerMajor),
+			Minor: getVersion("minor", SemVerMinor),
+			Build: getVersion("patch", SemVerPatch),
 		},
 		Commands: []plugin.Command{
 			{
@@ -395,6 +402,13 @@ func (c *TargetsPlugin) targetExists(targetPath string) bool {
 	target := configuration.NewDiskPersistor(targetPath)
 	return target.Exists()
 }
+
+/*
+1. current file exists
+2. current file is a symlink
+3. target file of the symlink exists
+4. target file matches the current file
+*/
 
 func (c *TargetsPlugin) checkStatus() {
 	currentConfig := configuration.NewDiskPersistor(c.configPath)
