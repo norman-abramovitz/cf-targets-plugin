@@ -17,6 +17,7 @@ VERSION_SPLIT:=$(subst ., ,$(VERSION_TAG))
   ifneq ($(words $(VERSION_SPLIT)),3)
     $(error VERSION_TAG  does not 3 parts |$(words VERSION_SPLIT)|$(VERSION_TAG)|$(VERSION_SPLIT)|)
   endif
+  VERSION_SPLIT:=$(wordlist 1, 2, $(VERSION_SPLIT)) $(shell echo $$(($(word 3,$(VERSION_SPLIT))+1)))
 endif
 
 IS_NOT_NUMBER:=$(shell echo $(VERSION_SPLIT) | sed -e 's/[0123456789]//g')
