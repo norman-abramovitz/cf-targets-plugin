@@ -1,3 +1,7 @@
+.vscode
+*.swp
+.ssh-remote
+*~
 /cf-targets-plugin
 /releases/**
 .DS_Store
