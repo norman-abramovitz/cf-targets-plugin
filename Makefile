@@ -12,7 +12,7 @@ VERSION_SPLIT:=$(subst ., ,$(VERSION))
     $(error VERSION does not 3 parts $(VERSION))
   endif
 else
-VERSION_TAG:=$(shell git describe --tags --abbrev=0 | sed -e "s/^v//")
+VERSION_TAG:=$(shell (git describe --tags --abbrev=0 2>/dev/null || echo 0.0.0) | sed -e "s/^v//")
 VERSION_SPLIT:=$(subst ., ,$(VERSION_TAG))
   ifneq ($(words $(VERSION_SPLIT)),3)
     $(error VERSION_TAG  does not 3 parts |$(words $(VERSION_SPLIT))|$(VERSION_TAG)|$(VERSION_SPLIT)|)
@@ -112,10 +112,11 @@ endef
 $(foreach target,$(TARGETS), $(eval $(call build-target,$(word 1, $(subst /, ,$(target))),$(word 2, $(subst /, ,$(target))),$(SEMVER_BUILDMETA))))
 
 clean:
-	@rm -rf $(DEV_TEST_BUILD) 
+	@rm -f $(DEV_TEST_BUILD) || true
 
 release-clean:
-	@rm -rf $(RELEASE_ROOT)/* 
+	@rm -f $(RELEASE_ROOT)/$(PROJECT)-* $(RELEASE_ROOT)/repo-index.yml || true
+	@[[ ! -d $(RELEASE_ROOT) ]] || rmdir -p $(RELEASE_ROOT)
 
 distclean: clean release-clean
 
